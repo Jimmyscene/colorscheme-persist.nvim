@@ -8,9 +8,9 @@ local action_state = require("telescope.actions.state")
 local function getHomePath()
   local uname = vim.loop.os_uname()
   local os_name = uname.sysname
-  local is_mac = os_name == 'Darwin'
-  local is_linux = os_name == 'Linux'
-  local is_windows = os_name:find 'Windows' and true or false
+  local is_mac = os_name == "Darwin"
+  local is_linux = os_name == "Linux"
+  local is_windows = os_name:find("Windows") and true or false
   local home = ""
 
   if is_linux or is_mac then
@@ -46,28 +46,32 @@ local M = {
     "shine",
     "slate",
     "torte",
-    "zellner"
+    "zellner",
   },
   -- Options for the telescope picker
-  picker_opts = themes.get_dropdown()
+  picker_opts = themes.get_dropdown(),
 }
 
 -- Get list with all colorschemes without disabled ones
-local _get_colors = function(disable)
+local _get_colors = function(disable, enabled)
   disable = disable or {}
   local colors = {}
-  local all_colors = vim.fn.getcompletion("", "color")
-  for _, color in ipairs(all_colors) do
-    local ignored = false
-    for _, disabled_color in ipairs(disable) do
-      if color == disabled_color then
-        ignored = true
-        break
+  if next(enabled) == nil then
+    local all_colors = vim.fn.getcompletion("", "color")
+    for _, color in ipairs(all_colors) do
+      local ignored = false
+      for _, disabled_color in ipairs(disable) do
+        if color == disabled_color then
+          ignored = true
+          break
+        end
+      end
+      if not ignored then
+        table.insert(colors, color)
       end
     end
-    if not ignored then
-      table.insert(colors, color)
-    end
+  else
+    colors = enabled
   end
   return colors
 end
@@ -93,7 +97,7 @@ function M.setup(opts)
   end
 
   -- Set available colors for picker
-  M.colorschemes = _get_colors(M.disable)
+  M.colorschemes = _get_colors(M.disable, M.enabled)
 end
 
 -- Get stored colorscheme
@@ -116,10 +120,10 @@ function M.picker()
   end
 
   colors = vim.list_extend(
-    { before_color },
     vim.tbl_filter(function(color)
       return color ~= before_color
-    end, colors)
+    end, colors),
+    { before_color }
   )
 
   pickers.new(M.picker_opts, {
